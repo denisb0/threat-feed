@@ -1,0 +1,61 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"golang.org/x/time/rate"
+)
+
+func main() {
+	err := godotenv.Load()
+	if err != nil {
+		panic(fmt.Sprintln("env file not loaded", err))
+	}
+
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	slog.SetDefault(logger)
+
+	rateLimit, err := strconv.ParseFloat(os.Getenv("RATE_LIMIT"), 64)
+	if err != nil {
+		panic(fmt.Sprintln("invalid RATE_LIMIT value", err))
+	}
+
+	rateBurst, err := strconv.Atoi(os.Getenv("RATE_BURST"))
+	if err != nil {
+		panic(fmt.Sprintln("invalid RATE_BURST value", err))
+	}
+
+	router := gin.Default()
+	router.GET("/query", queryHandler())
+	router.POST("/ingest", RLMiddleware(rate.Limit(rateLimit), rateBurst), ingestHandler())
+
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: router,
+	}
+
+	go func() {
+		slog.Info("starting server...", "address", "localhost:8080")
+		if err := server.ListenAndServe(); err != nil {
+			slog.Error("server error", "error", err)
+		}
+	}()
+
+	q := SignalHandler(context.Background(), func(sig os.Signal) {
+		slog.Info("received signal, shutting down...", "signal", sig)
+	}, func(s os.Signal) {
+		if err := server.Shutdown(context.Background()); err != nil {
+			slog.Error("server shutdown error", "error", err)
+		}
+	})
+
+	<-q
+	slog.Info("shutdown complete")
+}
