@@ -29,7 +29,8 @@ func setupRouter(path string, h gin.HandlerFunc) *gin.Engine {
 	return r
 }
 
-func TestQuery(t *testing.T) {
+func TestQueryThreat(t *testing.T) {
+	t.Parallel()
 	testIP := "1.2.3.4"
 	mockReader := MockThreatReader{
 		hook: func(q string) (QueryResponse, error) {
@@ -56,10 +57,34 @@ func TestQuery(t *testing.T) {
 		Threat: true,
 		Feed:   "test-feed",
 	}, response)
+}
 
+func TestQueryNoThreat(t *testing.T) {
+	t.Parallel()
+	testIP := "1.2.3.4"
+	mockReader := MockThreatReader{
+		hook: func(q string) (QueryResponse, error) {
+			assert.Equal(t, testIP, q)
+			return QueryResponse{}, nil
+		},
+	}
+
+	handler := queryHandler(&mockReader)
+	router := setupRouter("/query", handler)
+
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/query?ip=%s", testIP), nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response QueryResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
+	assert.Equal(t, QueryResponse{}, response)
 }
 
 func TestQueryStorageError(t *testing.T) {
+	t.Parallel()
 	testIP := "1.2.3.4"
 	mockReader := MockThreatReader{
 		hook: func(q string) (QueryResponse, error) {

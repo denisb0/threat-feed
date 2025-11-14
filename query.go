@@ -28,13 +28,9 @@ func queryHandler(tr ThreatReader) gin.HandlerFunc {
 			c.AbortWithError(http.StatusInternalServerError, errors.New("threat storage error"))
 			return
 		}
-		resp := QueryResponse{
-			Threat: true,
-			Feed:   response.Feed,
-		}
 
 		slog.Info("query ip", "ip address", ip, "threat", response.Threat, "feed", response.Feed)
 
-		c.JSON(http.StatusOK, resp)
+		c.JSON(http.StatusOK, response)
 	}
 }
