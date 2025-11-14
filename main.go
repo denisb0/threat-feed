@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strconv"
 
@@ -43,10 +44,22 @@ func main() {
 		Handler: router,
 	}
 
+	pprofServer := &http.Server{
+		Addr:    ":6060",
+		Handler: http.DefaultServeMux,
+	}
+
 	go func() {
 		slog.Info("starting server...", "address", "localhost:8080")
-		if err := server.ListenAndServe(); err != nil {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("server error", "error", err)
+		}
+	}()
+
+	go func() {
+		slog.Info("starting pprof server...", "address", "localhost:6060")
+		if err := pprofServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("pprof server error", "error", err)
 		}
 	}()
 
@@ -55,6 +68,9 @@ func main() {
 	}, func(s os.Signal) {
 		if err := server.Shutdown(context.Background()); err != nil {
 			slog.Error("server shutdown error", "error", err)
+		}
+		if err := pprofServer.Shutdown(context.Background()); err != nil {
+			slog.Error("pprof server shutdown error", "error", err)
 		}
 	})
 
