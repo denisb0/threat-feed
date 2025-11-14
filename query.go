@@ -19,7 +19,7 @@ type QueryResponse struct {
 	Feed   string `json:"feed"`
 }
 
-func queryHandler(tr ThreatReader) func(*gin.Context) {
+func queryHandler(tr ThreatReader) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.Query("ip")
 
