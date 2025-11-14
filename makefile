@@ -1,14 +1,12 @@
-BINARY=njord
+BINARY=threat-feed
 
 all: clean build
 
 clean:
-	@echo "--> Target directory clean up"
-	rm -rf ./.build/target
 	rm -f ${BINARY}
 
 build:
-	go build -o ${BINARY} ./cmd
+	go build -o ${BINARY} 
 
 test-unit:
 	@echo "--> Running unit tests"

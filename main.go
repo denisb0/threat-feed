@@ -32,9 +32,11 @@ func main() {
 		panic(fmt.Sprintln("invalid RATE_BURST value", err))
 	}
 
+	storage := NewThreatMemStorage()
+
 	router := gin.Default()
-	router.GET("/query", queryHandler())
-	router.POST("/ingest", RLMiddleware(rate.Limit(rateLimit), rateBurst), ingestHandler())
+	router.GET("/query", queryHandler(storage))
+	router.POST("/ingest", RLMiddleware(rate.Limit(rateLimit), rateBurst), ingestHandler(storage))
 
 	server := &http.Server{
 		Addr:    ":8080",

@@ -42,5 +42,5 @@ threat-feed/
       "entries": ["malicious.example.com", "phishing.test.org", "bad-actor.net"]
     }'
 
-  curl "http://localhost:8080/query?ip=1.2.3.4"
+  curl "http://localhost:8080/query?ip=bad-actor.net"
 ```
