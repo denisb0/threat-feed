@@ -20,13 +20,13 @@ const (
 )
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	slog.SetDefault(logger)
+
 	err := godotenv.Load()
 	if err != nil {
 		slog.Warn(fmt.Sprintln("env file not loaded", err))
 	}
-
-	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
-	slog.SetDefault(logger)
 
 	rateLimit := defaultRateLimit
 	if rlEnv := os.Getenv("RATE_LIMIT"); rlEnv != "" {
@@ -87,7 +87,7 @@ func main() {
 		}()
 	}
 
-	q := SignalHandler(context.Background(), func(sig os.Signal) {
+	q := SignalHandler(func(sig os.Signal) {
 		slog.Info("received signal, shutting down...", "signal", sig)
 	}, func(s os.Signal) {
 		if err := server.Shutdown(context.Background()); err != nil {

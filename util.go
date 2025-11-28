@@ -1,13 +1,12 @@
 package main
 
 import (
-	"context"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
-func SignalHandler(ctx context.Context, hooks ...func(os.Signal)) <-chan any {
+func SignalHandler(hooks ...func(os.Signal)) <-chan any {
 	s := make(chan os.Signal, 1)
 	f := make(chan any, 1)
 
